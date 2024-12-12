@@ -21,3 +21,7 @@ The Domain model is a record signifying a HockeyStack customer. You shouldn't wo
 The implementation of the server and the ```server.js``` is not important for this project.
 
 Every data source in this project was created for test purposes. If any request takes more than 5 seconds to execute, there is something wrong with the implementation.
+
+## Debrief
+
+See [DEBRIEF.md](DEBRIEF.md) for a detailed explanation of how we could improve this project in terms of code quality and readability, project architecture and code performance.
