@@ -307,7 +307,7 @@ const processMeetings = async (domain, hubId, q) => {
     if (!searchResult) throw new Error('Failed to fetch meetings for the 4th time. Aborting.');
 
     const data = searchResult.results || [];
-    
+
     offsetObject.after = parseInt(searchResult.paging?.next?.after);
     console.log('fetch meeting batch');
 
@@ -330,7 +330,11 @@ const processMeetings = async (domain, hubId, q) => {
         meetingProperties: filterNullValuesFromObject(meetingProperties)
       };
 
-      // TODO: Add action to the queue
+      q.push({
+        actionName: isCreated ? 'Meeting Created' : 'Meeting Updated',
+        actionDate: new Date(isCreated ? meeting.createdAt : meeting.updatedAt),
+        ...actionTemplate
+      });
     });
 
     if (!offsetObject?.after) {
@@ -403,7 +407,7 @@ const pullDataFromHubspot = async () => {
     } catch (err) {
       console.log(err, { apiKey: domain.apiKey, metadata: { operation: 'processCompanies', hubId: account.hubId } });
     }
-   
+
     try {
       await processMeetings(domain, account.hubId, q);
       console.log('process meetings');
