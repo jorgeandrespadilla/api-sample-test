@@ -311,7 +311,29 @@ const processMeetings = async (domain, hubId, q) => {
     offsetObject.after = parseInt(searchResult.paging?.next?.after);
     console.log('fetch meeting batch');
 
-    // TODO: Add additional logic to fetch the contact email
+    // meeting to contact association
+    const meetingsToAssociate = data.map(meeting => meeting.id);
+    const contactAssociationsResults = (await (await hubspotClient.apiRequest({
+      method: 'post',
+      path: '/crm/v3/associations/MEETINGS/CONTACTS/batch/read',
+      body: { inputs: meetingsToAssociate.map(meetingId => ({ id: meetingId })) }
+    })).json())?.results || [];
+
+    const contactAssociations = Object.fromEntries(contactAssociationsResults.map(a => {
+      if (a.from) {
+        meetingsToAssociate.splice(meetingsToAssociate.indexOf(a.from.id), 1);
+        return [a.from.id, a.to[0].id];
+      } else return false;
+    }).filter(x => x));
+
+    // Retrieve contact emails
+    const contactEmails = await hubspotClient.crm.contacts.batchApi.read({
+      inputs: Object.values(contactAssociations).map(contactId => ({ id: contactId })),
+      properties: ['email']
+    });
+    const contactEmailsMap = Object.fromEntries(contactEmails.results.map(
+      contact => [contact.id, contact.properties.email]
+    ));
 
     data.forEach(meeting => {
       if (!meeting.properties) return;
@@ -321,7 +343,7 @@ const processMeetings = async (domain, hubId, q) => {
       const meetingProperties = {
         title: meeting.properties.hs_meeting_title,
         timestamp: meeting.properties.hs_timestamp,
-        contact: undefined // TODO: use the contact email
+        contact: contactEmailsMap[contactAssociations[meeting.id]]
       };
 
       const actionTemplate = {
