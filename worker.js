@@ -24,7 +24,7 @@ const generateLastModifiedDateFilter = (date, nowDate, propertyName = 'hs_lastmo
 
 const saveDomain = async domain => {
   // disable this for testing purposes
-  return; // TODO: comment this out after testing
+  // return;
 
   domain.markModified('integrations.hubspot.accounts');
   await domain.save();
